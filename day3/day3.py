@@ -1,7 +1,8 @@
 def compute_path(path):
     """Return a set with all the visited positions in (x, y) form"""
     current = [0, 0]
-    visited = set()
+    visited = {}
+    total_steps = 0
     for move in path:
         if move[0] == 'U':
             pos = 1
@@ -15,12 +16,15 @@ def compute_path(path):
         else:  # 'L'
             pos = 0
             multiplier = -1
-        
+
         steps = int(move[1:])
-        for step in range(1, steps + 1):
+        for _ in range(1, steps + 1):
             current[pos] += multiplier
-            visited.add(tuple(current))
-    
+            total_steps += 1
+            current_tuple = tuple(current)
+            if current_tuple not in visited:
+                visited[current_tuple] = total_steps
+
     return visited
 
 
@@ -29,7 +33,16 @@ def manhattan_distance(point1, point2):
 
 
 def find_intersections(path1, path2):
-    return compute_path(path1).intersection(compute_path(path2))
+    """Return a dictionary with the intersecting points as keys and the total steps
+    to reach that intersection by both paths, as given by the compute_path method"""
+    visited1 = compute_path(path1)
+    visited2 = compute_path(path2)
+    intersections = set(visited1.keys()).intersection(set(visited2.keys()))
+    result = {}
+    # Construct the dictionary of intersection: total steps
+    for point in intersections:
+        result[point] = visited1[point] + visited2[point]
+    return result
 
 
 def find_closest_point(points, origin=(0, 0)):
@@ -46,9 +59,14 @@ def find_closest_point(points, origin=(0, 0)):
 def main():
     with open("input.txt") as f:
         paths = [path.split(',') for path in f.read().splitlines()]
-    
-    closest = find_closest_point(find_intersections(paths[0], paths[1]))
+
+    # Part 1
+    intersection_dict = find_intersections(paths[0], paths[1])
+    closest = find_closest_point(intersection_dict.keys())
     print(manhattan_distance(closest, (0, 0)))
+
+    # Part 2
+    print(min(intersection_dict.values()))
 
 
 if __name__ == "__main__":
